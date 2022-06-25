@@ -9,8 +9,36 @@ steam_apikey = config("steam_apikey")
 
 
 def create_metadata(data, asset_link, escrow):
-    # TODO: Create JSON metadata and upload to IPFS
-    return True
+    metadata = {}
+    attributes = []
+
+    # Fetches the correct description of asset in JSON data
+    metadata['description'] = data['assets']['descriptions'][0]['value']
+    for text in data['assets']['descriptions'][:-1]:
+        value = text['value']
+        if len(value) > len(metadata['description']):
+            metadata['description'] = value
+
+    metadata['external_url'] = asset_link
+    metadata['image'] = data['image']
+    metadata['name'] = data['market_hash_name']
+
+    # Append the asset type
+    attributes.append({"trait_type": "Asset Type", "value": data['assetInfo']['type']})
+
+    # Attributes nested
+    for tag in data['assetInfo']['tags']:
+        attribute = {}
+        attribute['trait_type'] = str(tag['category_name'])
+        attribute['value'] = str(tag['name'])
+        attributes.append(attribute)
+
+    # Escrow attribute
+    attributes.append({"display_type": "date", "trait_type": "Escrow", "value": escrow})
+
+    metadata['attributes'] = attributes
+
+    return metadata
 
 
 async def process_escrow(resp):
