@@ -1,6 +1,9 @@
 import steam
 from decouple import config
 import requests
+import json
+import ipfshttpclient
+import os
 from datetime import timedelta
 
 
@@ -38,7 +41,18 @@ def create_metadata(data, asset_link, escrow):
 
     metadata['attributes'] = attributes
 
-    return metadata
+    # TODO: Improve upload of metadata without creating "data.json" file
+    with open('data.json', 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, ensure_ascii=False, indent=4)
+
+    # In order to make the ipfshttpclient packet work with new versions of ipfs:
+    # go to __init__.py and change VERSION_MAXIMUM to "0.14.0"
+    client = ipfshttpclient.connect()  # Connects to: /dns/localhost/tcp/5001/http
+    res = client.add('data.json')
+    os.remove('data.json')
+    hash = res['Hash']
+
+    return hash
 
 
 async def process_escrow(resp):
