@@ -76,6 +76,9 @@ class MyClient(steam.Client):
 
         url = 'https://api.steamapis.com/market/item/{}/{}?api_key={}'.format(appid, market_hash_name, steam_apikey)
         data = requests.get(url=url).json()
+
+        ipfs_hash = create_metadata(data, asset_link, escrow)
+
         await trade.partner.send("Asset ready to mint")
 
 
