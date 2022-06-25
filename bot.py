@@ -11,6 +11,7 @@ from eth_account.messages import defunct_hash_message
 from eth_account.account import Account
 import eth_utils
 from datetime import timedelta
+import time
 
 
 # Insert your own https://steamapis.com API key
@@ -20,7 +21,7 @@ steam_apikey = config("steam_apikey")
 privatekey = config("private_key")
 
 
-def create_metadata(data, asset_link, escrow):
+def create_metadata(data, asset_link, cooldown):
     metadata = {}
     attributes = []
     print('Creating metadata')
@@ -47,8 +48,8 @@ def create_metadata(data, asset_link, escrow):
         attribute['value'] = str(tag['name'])
         attributes.append(attribute)
 
-    # Escrow attribute
-    attributes.append({"display_type": "date", "trait_type": "Escrow", "value": escrow})
+    # Cooldown attribute
+    attributes.append({"display_type": "date", "trait_type": "Cooldown", "value": cooldown})
 
     metadata['attributes'] = attributes
 
@@ -66,8 +67,8 @@ def create_metadata(data, asset_link, escrow):
     return hash
 
 
-def sign_confirmation(escrow, uri):
-    hash = solidityKeccak(abi_types=['uint256', 'string'], values=[escrow, uri], validity_check=True)
+def sign_confirmation(cooldown, uri):
+    hash = solidityKeccak(abi_types=['uint256', 'string'], values=[cooldown, uri], validity_check=True)
     test = "0x" + hash.hex()
     signed_msg_hash = Account.signHash(test, privatekey)
     return signed_msg_hash.signature.hex()
@@ -100,14 +101,6 @@ def solidityKeccak(abi_types, values, validity_check=False):
     return eth_utils.keccak(hexstr=hex_string)
 
 
-async def process_escrow(resp):
-    their_escrow = resp["response"].get("their_escrow")
-    if their_escrow is None:  # private
-        return None
-    seconds = their_escrow["escrow_end_duration_seconds"]
-    return timedelta(seconds=seconds) if seconds else None
-
-
 class MyClient(steam.Client):
     market_hash_name = ""
 
@@ -127,23 +120,25 @@ class MyClient(steam.Client):
 
     async def on_trade_accept(self, trade: steam.TradeOffer):  # we accepted a trade
         print(f"Accepted trade: #{trade.id}")
-        print(self.market_hash_name)
-        # TODO: Test if it works!
-        escrow = process_escrow(self.user._state.http.get_user_escrow(self.user.id64, trade.token))
         items_received = trade.items_to_receive
         appid = items_received[0].game.id
         contextid = items_received[0].game.context_id
         asset_id = items_received[0].asset_id
-        asset_link = 'https://steamcommunity.com/id/{}/inventory/#{}_{}_{}'.format(self.user, appid, contextid, asset_id)
+        asset_link = 'https://steamcommunity.com/profiles/{}/inventory/#{}_{}_{}'.format(self.user.id64, appid, contextid, asset_id)
+
         url = 'https://api.steamapis.com/market/item/{}/{}?api_key={}'.format(appid, self.market_hash_name, steam_apikey)
-        print(url)
         data = requests.get(url=url).json()
 
-        ipfs_hash = create_metadata(data, asset_link, escrow)
+        cooldown_url = 'https://api.steamapis.com/steam/inventory/{}/{}/{}?api_key={}'.format(self.user.id64, appid, contextid, steam_apikey)
+        cooldown_data = requests.get(url=cooldown_url).json()
+        cooldown_fetch = cooldown_data['descriptions'][0]['market_tradable_restriction'] + 1
+        cooldown = round(time.time() + (86400 * cooldown_fetch))
 
-        signature = sign_confirmation(escrow, ipfs_hash)
-        mint_link = "http://localhost:8080/?name={}&hash={}&escrow={}&signature={}".format(self.market_hash_name, ipfs_hash, escrow, signature)
+        ipfs_hash = create_metadata(data, asset_link, cooldown)
 
+        signature = sign_confirmation(cooldown, ipfs_hash)
+        mint_link = "http://localhost:8080/?name={}&hash={}&cooldown={}&signature={}".format(self.market_hash_name, ipfs_hash, cooldown, signature)
+        print(mint_link)
         await trade.partner.send("Asset ({}) ready to mint: {}".format(self.market_hash_name, mint_link))
 
 
