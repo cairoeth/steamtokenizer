@@ -23,6 +23,8 @@ privatekey = config("private_key")
 def create_metadata(data, asset_link, escrow):
     metadata = {}
     attributes = []
+    print('Creating metadata')
+    print(data)
 
     # Fetches the correct description of asset in JSON data
     metadata['description'] = data['assets']['descriptions'][0]['value']
@@ -107,16 +109,17 @@ async def process_escrow(resp):
 
 
 class MyClient(steam.Client):
+    market_hash_name = ""
+
     async def on_ready(self) -> None:
         print("Logged in as", self.user)
 
     async def on_trade_receive(self, trade: steam.TradeOffer) -> None:
-        # <Item name='UMP-45 | Mudder (Field-Tested)' amount=1 class_id=3035567899 asset_id=17467254332 instance_id=302028390 owner=<User name='OnlyDallas' state=<PersonaState.Online: 1> id=126126521 type=<Type.Individual: 1> universe=<Universe.Public: 1> instance=1> game=StatefulGame(name=None, id=730, context_id=2)>
-
         # Make sure trade is a gift, only one item and address in message is valid
         # if trade.is_gift() and len(trade.items_to_receive) == 1:
         if len(trade.items_to_receive) == 1:
             print(f"Accepting trade: #{trade.id}")
+            self.market_hash_name = str(trade.items_to_receive[0].name)
             await trade.accept()
         else:
             print(f"Rejecting trade: #{trade.id}")
@@ -124,24 +127,24 @@ class MyClient(steam.Client):
 
     async def on_trade_accept(self, trade: steam.TradeOffer):  # we accepted a trade
         print(f"Accepted trade: #{trade.id}")
+        print(self.market_hash_name)
         # TODO: Test if it works!
         escrow = process_escrow(self.user._state.http.get_user_escrow(self.user.id64, trade.token))
         items_received = trade.items_to_receive
-        market_hash_name = items_received[0].name
         appid = items_received[0].game.id
         contextid = items_received[0].game.context_id
         asset_id = items_received[0].asset_id
         asset_link = 'https://steamcommunity.com/id/{}/inventory/#{}_{}_{}'.format(self.user, appid, contextid, asset_id)
-        url = 'https://api.steamapis.com/market/item/{}/{}?api_key={}'.format(appid, market_hash_name, steam_apikey)
+        url = 'https://api.steamapis.com/market/item/{}/{}?api_key={}'.format(appid, self.market_hash_name, steam_apikey)
         print(url)
         data = requests.get(url=url).json()
 
         ipfs_hash = create_metadata(data, asset_link, escrow)
 
         signature = sign_confirmation(escrow, ipfs_hash)
-        mint_link = "http://localhost:8080/?name={}&hash={}&escrow={}&signature={}".format(market_hash_name, ipfs_hash, escrow, signature)
+        mint_link = "http://localhost:8080/?name={}&hash={}&escrow={}&signature={}".format(self.market_hash_name, ipfs_hash, escrow, signature)
 
-        await trade.partner.send("Asset ({}) ready to mint: {}".format(market_hash_name, mint_link))
+        await trade.partner.send("Asset ({}) ready to mint: {}".format(self.market_hash_name, mint_link))
 
 
 client = MyClient()
