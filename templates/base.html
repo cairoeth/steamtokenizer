@@ -118,7 +118,7 @@
         // Web3 Setup
         const web3 = new Web3(Web3.givenProvider);
 
-        const address = '';
+        const address = '0xB13A71e079a759c6a983DBeD355CE0a335365FD2';
         const mint = document.querySelector("#mint-submit");
         const hasWallet = document.querySelector(".has-wallet");
         const hasNoWallet = document.querySelector(".no-wallet");
@@ -126,7 +126,7 @@
         const box = document.getElementById('box');
 
         const send = async function () {
-            const data = await fetch('https://cdn.jsdelivr.net/gh/cairoeth/steamtokenizer/abi.json');
+            const data = await fetch('https://cdn.jsdelivr.net/gh/cairoeth/steamtokenizer@826315c/abi.json');
             const abi = await data.json();
             // get a list of accounts from metamask
             const accounts = await window.ethereum.request({

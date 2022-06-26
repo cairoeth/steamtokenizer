@@ -37,6 +37,7 @@ def create_metadata(data, asset_link, cooldown):
     metadata['external_url'] = asset_link
     metadata['image'] = data['image']
     metadata['name'] = data['market_hash_name']
+    metadata['game'] = data['description']
 
     # Append the asset type
     attributes.append({"trait_type": "Asset Type", "value": data['assetInfo']['type']})
