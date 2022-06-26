@@ -103,7 +103,7 @@
     <script>
         let name = '{{ name }}';
     	let hash = '{{ hash }}';
-        let escrow = '{{ escrow }}';
+        let cooldown = parseInt('{{ cooldown }}');
         let signature = '{{ signature }}';
 
         mint_button = document.getElementById("mint-submit");
@@ -136,12 +136,17 @@
             // Set up the web3 contract
             const nft = new web3.eth.Contract(abi, address);
 
+            console.log(cooldown);
+            console.log(typeof cooldown);
+            console.log(typeof hash);
+            console.log(typeof signature);
+
             // if an account is present
             if (accounts.length > 0) {
-                await nft.methods.mint(escrow, hash, signature).estimateGas({from: accounts[0]})
+                await nft.methods.mint(cooldown, hash, signature).estimateGas({from: accounts[0]})
                     .then(function(){
                         status.innerHTML = "Mint initiated 💡 Please wait";
-                        nft.methods.mint(escrow, hash, signature).send({from: accounts[0]})
+                        nft.methods.mint(cooldown, hash, signature).send({from: accounts[0]})
                             .on('receipt', function(receipt){
                                 status.innerHTML +="Mint Completed 💜 See the collection on "   +"<a href='"+link+"'>OpenSea</a>";
                             });

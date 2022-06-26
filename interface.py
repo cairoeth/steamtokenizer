@@ -12,10 +12,10 @@ app = Flask(__name__)
 def main():
     name = request.args.get('name')
     hash = request.args.get('hash')
-    escrow = request.args.get('escrow')
+    cooldown = request.args.get('cooldown')
     signature = request.args.get('signature')
 
-    return render_template('base.html', name=name, hash=hash, escrow=escrow, signature=signature)
+    return render_template('base.html', name=name, hash=hash, cooldown=cooldown, signature=signature)
 
 
 if __name__ == '__main__':
