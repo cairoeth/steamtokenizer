@@ -37,7 +37,6 @@ def create_metadata(data, asset_link, cooldown):
     metadata['external_url'] = asset_link
     metadata['image'] = data['image']
     metadata['name'] = data['market_hash_name']
-    metadata['game'] = data['description']
 
     # Append the asset type
     attributes.append({"trait_type": "Asset Type", "value": data['assetInfo']['type']})
@@ -51,6 +50,9 @@ def create_metadata(data, asset_link, cooldown):
 
     # Cooldown attribute
     attributes.append({"display_type": "date", "trait_type": "Cooldown", "value": cooldown})
+
+    # Game attribute
+    attributes.append({"trait_type": "Game", "value": data['description']})
 
     metadata['attributes'] = attributes
 
@@ -110,8 +112,7 @@ class MyClient(steam.Client):
 
     async def on_trade_receive(self, trade: steam.TradeOffer) -> None:
         # Make sure trade is a gift, only one item and address in message is valid
-        # if trade.is_gift() and len(trade.items_to_receive) == 1:
-        if len(trade.items_to_receive) == 1:
+        if trade.is_gift() and len(trade.items_to_receive) == 1:
             print(f"Accepting trade: #{trade.id}")
             self.market_hash_name = str(trade.items_to_receive[0].name)
             await trade.accept()
