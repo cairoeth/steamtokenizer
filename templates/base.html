@@ -76,14 +76,14 @@
                         <svg class="bi text-warning flex-shrink-0" width="48" height="48"><use xlink:href="#check2-circle"/></svg>
                         <div>
                             <h5 class="mb-0">Mint NFT</h5>
-                            Use the mint link to generate the NFT. Owner can burn the NFT to receive the Steam asset back.
+                            Use the mint link to generate the NFT. Owner can burn the NFT to receive the Steam asset back (WIP).
                         </div>
                     </li>
                 </ul>
 
                 <div style="display: none" class="has-wallet">
                     <p id="box" class="info-text alert alert-secondary">
-                        <span id="status">Make sure to be on the ethereum network 👽</span>
+                        <span id="status">Make sure to be on the Rinkeby network 👽</span>
                     </p>
                     <button id="mint-submit" href="#" type="button" class="btn btn-lg btn-primary mt-5 w-100" data-bs-dismiss="modal">Mint</button>
                 </div>
@@ -126,7 +126,7 @@
         const box = document.getElementById('box');
 
         const send = async function () {
-            const data = await fetch('https://cdn.jsdelivr.net/gh/cairoeth/steamtokenizer@826315c/abi.json');
+            const data = await fetch('https://cdn.jsdelivr.net/gh/cairoeth/steamtokenizer@39dd3a7/abi.json');
             const abi = await data.json();
             // get a list of accounts from metamask
             const accounts = await window.ethereum.request({
