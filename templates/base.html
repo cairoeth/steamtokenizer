@@ -97,8 +97,6 @@
 </div>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/merkletreejs@latest/merkletree.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/keccak256@latest/keccak256.js"></script>
 
     <script>
         let name = '{{ name }}';
@@ -136,11 +134,6 @@
             // Set up the web3 contract
             const nft = new web3.eth.Contract(abi, address);
 
-            console.log(cooldown);
-            console.log(typeof cooldown);
-            console.log(typeof hash);
-            console.log(typeof signature);
-
             // if an account is present
             if (accounts.length > 0) {
                 await nft.methods.mint(cooldown, hash, signature).estimateGas({from: accounts[0]})
@@ -148,7 +141,7 @@
                         status.innerHTML = "Mint initiated 💡 Please wait";
                         nft.methods.mint(cooldown, hash, signature).send({from: accounts[0]})
                             .on('receipt', function(receipt){
-                                status.innerHTML +="Mint Completed 💜 See the collection on "   +"<a href='"+link+"'>OpenSea</a>";
+                                status.innerHTML +="Mint Completed 💜";
                             });
                     })
                     .catch(function(err){
